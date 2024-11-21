@@ -11,32 +11,27 @@ import React, { useState, useEffect } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import api from '../API/api';
 
-// Mock project data (replace with API call to fetch real data)
-const mockProjects = [
-  { id: 1, name: 'Project Alpha' },
-  { id: 2, name: 'Project Beta' },
-  { id: 3, name: 'Project Gamma' },
-];
-
+//doc manage page 
 const UploadFile = () => {
-  const [projects, setProjects] = useState(mockProjects); // Replace with API call to fetch projects
-  const [selectedProject, setSelectedProject] = useState(null); // Selected project
+  const [projects, setProjects] = useState([]); //get proj from backend
+  const [selectedProject, setSelectedProject] = useState(null); // project
   const [selectedDocuments, setSelectedDocuments] = useState<DocumentPicker.DocumentPickerAsset[]>([]);
 
-  // Fetch projects from the backend
+  // get projects from backend 
   useEffect(() => {
-    // Uncomment and use when integrating with the backend
-    // const fetchProjects = async () => {
-    //   try {
-    //     const response = await api.get('/projects');
-    //     setProjects(response.data);
-    //   } catch (error) {
-    //     console.error('Error fetching projects:', error);
-    //   }
-    // };
-    // fetchProjects();
+    const fetchProjects = async () => {
+      try {
+        const response = await api.get('/projects');
+        setProjects(response.data);
+      } catch (error) {
+        Alert.alert('Error', 'Failed to fetch projects.');
+        console.error('Error fetching projects:', error);
+      }
+    };
+    fetchProjects();
   }, []);
 
+  //doc picker for pdfs
   const pickDocument = async () => {
     if (!selectedProject) {
       Alert.alert('Error', 'Please select a project before uploading documents.');
@@ -44,18 +39,14 @@ const UploadFile = () => {
     }
 
     try {
-      const result = await DocumentPicker.getDocumentAsync({ multiple: true });
+      const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' }); //only pdfs
       if (!result.canceled) {
         const successResult = result as DocumentPicker.DocumentPickerSuccessResult;
 
-        if (selectedDocuments.length + successResult.assets.length <= 5) {
-          setSelectedDocuments((prevSelectedDocuments) => [
-            ...prevSelectedDocuments,
-            ...successResult.assets,
-          ]);
-        } else {
-          Alert.alert('Error', 'Maximum of 5 documents allowed.');
-        }
+        setSelectedDocuments((prevSelectedDocuments) => [
+          ...prevSelectedDocuments,
+          ...successResult.assets,
+        ]);
       } else {
         console.log('Document selection cancelled.');
       }
@@ -64,6 +55,7 @@ const UploadFile = () => {
     }
   };
 
+  //upload to backend 
   const uploadDocuments = async () => {
     if (!selectedProject) {
       Alert.alert('Error', 'Please select a project before uploading documents.');
@@ -77,15 +69,19 @@ const UploadFile = () => {
           uri: document.uri,
           name: document.name,
           type: document.mimeType,
-        });
-        formData.append('project_id', selectedProject.id); // Link document to project
+        } as any); // Using "any" for type compatibility
+        formData.append('project_id', selectedProject.project_id); // link doc to proj
+
         const response = await api.post('/documents', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         });
+
         console.log('Document uploaded:', response.data);
       }
 
-      // Clear selected documents after upload
+      // clear selected documents after upload //maybe fix later 
       setSelectedDocuments([]);
       Alert.alert('Success', 'Documents uploaded successfully.');
     } catch (error) {
@@ -94,30 +90,25 @@ const UploadFile = () => {
     }
   };
 
-  const handleSelectProject = (project) => {
-    setSelectedProject(project);
-  };
-
-  const getFileType = (fileName: string): string => {
-    const extension = fileName.split('.').pop()?.toLowerCase();
-    switch (extension) {
-      case 'pdf':
-        return 'PDF';
-      case 'doc':
-      case 'docx':
-        return 'Word';
-      case 'xls':
-      case 'xlsx':
-        return 'Excel';
-      default:
-        return 'Unknown';
+  //delete doc
+  const handleDeleteDocument = async (documentId: number) => {
+    try {
+      await api.delete(`/documents/${documentId}`);
+      Alert.alert('Deleted!', 'Document has been removed.');
+      //update list 
+      setSelectedDocuments((prevSelectedDocuments) =>
+        prevSelectedDocuments.filter((document) => document.document_id !== documentId)
+      );
+    } catch (error) {
+      Alert.alert('Error!', 'Failed to delete document.');
+      console.error('Error deleting document:', error);
     }
   };
 
-  const removeDocument = (index: number) => {
-    setSelectedDocuments((prevSelectedDocuments) =>
-      prevSelectedDocuments.filter((_, i) => i !== index)
-    );
+  //select proj
+  const handleSelectProject = (project) => {
+    setSelectedProject(project);
+    Alert.alert('Project Selected', `You selected: ${project.name}`);
   };
 
   return (
@@ -126,13 +117,13 @@ const UploadFile = () => {
       <Text style={styles.title}>Select a Project:</Text>
       <FlatList
         data={projects}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.project_id.toString()}
         horizontal
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[
               styles.projectItem,
-              selectedProject?.id === item.id && styles.selectedProject,
+              selectedProject?.project_id === item.project_id && styles.selectedProject,
             ]}
             onPress={() => handleSelectProject(item)}
           >
@@ -150,7 +141,7 @@ const UploadFile = () => {
 
       {/* Upload Button */}
       <View style={styles.uploadButton}>
-        <Button title="Upload File" color="#1e90ff" onPress={pickDocument} />
+        <Button title="Upload PDF" color="#1e90ff" onPress={pickDocument} />
       </View>
 
       {/* Display Selected Documents */}
@@ -160,8 +151,7 @@ const UploadFile = () => {
         renderItem={({ item, index }) => (
           <View style={styles.documentItem}>
             <Text style={styles.fileName}>Name: {item.name}</Text>
-            <Text>Type: {getFileType(item.name)}</Text>
-            <TouchableOpacity onPress={() => removeDocument(index)}>
+            <TouchableOpacity onPress={() => handleDeleteDocument(index)}>
               <Text style={styles.removeButton}>Remove</Text>
             </TouchableOpacity>
           </View>
