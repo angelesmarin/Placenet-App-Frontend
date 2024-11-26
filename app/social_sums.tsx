@@ -1,5 +1,11 @@
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { StyleSheet, Text, View, FlatList, Image } from 'react-native';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  FlatList, 
+  Image 
+} from 'react-native';
 import React from 'react';
 
 
