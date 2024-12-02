@@ -13,14 +13,24 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+<<<<<<< HEAD
       "supportsTablet": true
+=======
+      "supportsTablet": true,
+      "newArchEnabled": true
+>>>>>>> ad498fc6717d5068c1cb5ca6a9327a6d9e4d6145
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+<<<<<<< HEAD
       "package": "com.anonymous.Placenet"
+=======
+      "package": "com.anonymous.Placenet",
+      "newArchEnabled": true
+>>>>>>> ad498fc6717d5068c1cb5ca6a9327a6d9e4d6145
     },
     "web": {
       "bundler": "metro",
@@ -28,7 +38,13 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+<<<<<<< HEAD
       "expo-router"
+=======
+      "expo-router",
+      "expo-font",
+      "expo-secure-store"
+>>>>>>> ad498fc6717d5068c1cb5ca6a9327a6d9e4d6145
     ],
     "experiments": {
       "typedRoutes": true
